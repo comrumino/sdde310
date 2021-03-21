@@ -2,7 +2,6 @@ import unittest
 import graph
 
 
-
 class TestUndirectedEdge(unittest.TestCase):
     def test_post_init(self):
         nameA = 'A'
@@ -11,6 +10,7 @@ class TestUndirectedEdge(unittest.TestCase):
         edgeAB = graph.edge_factory(nameA, nameB, weight, directed=False)
         edgeBA = graph.edge_factory(nameB, nameA, weight, directed=False)
         self.assertEqual(edgeAB, edgeBA)
+
 
 #      A
 # 0.5/   \ 0.5
@@ -71,16 +71,6 @@ expected_complete_diamond_str = """Graph(name='complete-diamond')
 
 
 class TestGraph(unittest.TestCase):
-    """
-    - bfs recursive
-    - bfs non-recursive
-    - dfs recursive
-    - dfs non-recursive
-    Traversal Invariants:
-        - terminates if
-            - visited
-            - 
-    """
     @classmethod
     def setUpClass(cls):
         cls.vtx_a = graph.Vertex('a')

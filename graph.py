@@ -1,7 +1,7 @@
 import logging
 from collections import defaultdict, deque
 import functools
-from typing import Optional, Union, Generator
+from typing import Optional, Union, Generator, Tuple
 from dataclasses import dataclass
 
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
@@ -40,7 +40,8 @@ class UndirectedEdge:
 
 
 TypingEdge = Union[DirectedEdge, UndirectedEdge]
-TypingVisited = defaultdict[Vertex, tuple]
+TypingPath = Tuple[Vertex, ...]
+TypingVisited = defaultdict[Vertex, TypingPath]
 
 
 def edge_factory(vertex_name1: str, vertex_name2: str, weight: float, directed: Optional[bool] = True) -> TypingEdge:
@@ -87,7 +88,7 @@ class Graph:
             vertex1 = vertex2
         return weight
 
-    def min_vertex_sequence_weight(self, sequence1: tuple[Vertex, ...], sequence2: tuple[Vertex, ...]):
+    def min_vertex_sequence_weight(self, sequence1: TypingPath, sequence2: TypingPath):
         sequence1_weight = self.total_vertex_sequence_weight(sequence1)
         sequence2_weight = self.total_vertex_sequence_weight(sequence2)
         if sequence1_weight < sequence2_weight:
@@ -176,7 +177,7 @@ class Graph:
             if self.visit_vertex_neighbors(edge.vertex2, edge.vertex1, visited):
                 q.appendleft(edge)
 
-    def shortest_path(self, vtx_name1: str, vtx_name2: str, search: str) -> Union[tuple[Vertex, ...], NotImplementedError]:
+    def shortest_path(self, vtx_name1: str, vtx_name2: str, search: str) -> Union[TypingPath, NotImplementedError]:
         """ returns vertex sequence from visited[v1] since it is the shortest path to v2 """
         vertex1: Vertex = Vertex(vtx_name1)
         vertex2: Vertex = Vertex(vtx_name2)
