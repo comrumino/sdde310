@@ -68,6 +68,18 @@ expected_complete_diamond_str = """Graph(name='complete-diamond')
     (Vertex(name='d'), DirectedEdge(vertex1=Vertex(name='c'), vertex2=Vertex(name='d'), weight=0.5))
 
 """
+#      A
+# 2.0/   \ 0.5
+#   B --- C      where B-C weight is 0.5
+# 0.5\   / 2.0
+#      D
+complete_udiamond = graph.Graph(name='complete-udiamond', directed=False)
+complete_udiamond.add_edge('a', 'b', 2.0)
+complete_udiamond.add_edge('a', 'c', 0.5)
+complete_udiamond.add_edge('b', 'd', 0.5)
+complete_udiamond.add_edge('c', 'd', 2.0)
+# edges to complete
+complete_udiamond.add_edge('b', 'c', 0.5)
 
 
 class TestGraph(unittest.TestCase):
@@ -124,3 +136,14 @@ class TestGraph(unittest.TestCase):
         shortest_path_ad = complete_diamond.shortest_path('a', 'd', 'dfs-nonrecursive')
         expected_sequence = tuple([graph.Vertex('a'), graph.Vertex('b'), graph.Vertex('c'), graph.Vertex('d')])
         self.assertEqual(expected_sequence, shortest_path_ad)
+
+    def test_5_shortest_path_undirected(self):
+        shortest_path_ad = complete_udiamond.shortest_path('a', 'd', 'dfs-nonrecursive')
+        expected_sequence = tuple([graph.Vertex('a'), graph.Vertex('c'), graph.Vertex('b'), graph.Vertex('d')])
+        self.assertEqual(expected_sequence, shortest_path_ad)
+        # verify dfs traversal visited datastructures are same as bfs
+        dfs_recursive = complete_udiamond.dfs_traversal(self.vtx_a, True)
+        dfs_nonrecursive = complete_udiamond.dfs_traversal(self.vtx_a, False)
+        bfs = complete_udiamond.bfs_traversal(self.vtx_a)
+        self.assertEqual(dfs_nonrecursive, dfs_recursive)
+        self.assertEqual(dfs_nonrecursive, bfs)

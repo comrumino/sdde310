@@ -83,21 +83,24 @@ class Graph:
         vertex2 = None
         weight = 0
         for vertex2 in vertex_sequence[1:]:
-            edge = self.adjacency_list[vertex1][vertex2]
+            if self.directed or vertex2 in self.adjacency_list.get(vertex1, {}):
+                edge = self.adjacency_list[vertex1][vertex2]
+            else:
+                edge = self.adjacency_list[vertex2][vertex1]
             weight += edge.weight
             vertex1 = vertex2
         return weight
 
-    def min_vertex_sequence_weight(self, sequence1: TypingPath, sequence2: TypingPath):
+    def min_vertex_sequence_weight(self, sequence1: tuple[Vertex, ...], sequence2: tuple[Vertex, ...]) -> TypingPath:
         sequence1_weight = self.total_vertex_sequence_weight(sequence1)
         sequence2_weight = self.total_vertex_sequence_weight(sequence2)
-        if sequence1_weight < sequence2_weight:
+        if sequence1_weight <= sequence2_weight:
             return sequence1
         else:
             return sequence2
 
     def add_edge(self, vertex1: str, vertex2: str, weight: float, /) -> None:
-        edge = edge_factory(vertex1, vertex2, weight)
+        edge = edge_factory(vertex1, vertex2, weight, self.directed)
         self.adjacency_list[edge.vertex1][edge.vertex2] = edge
 
     def neighbors(self, target_vertex: Vertex) -> Generator[tuple[Vertex, TypingEdge], None, None]:
@@ -135,27 +138,30 @@ class Graph:
             # previous paths to visit v consists of a sequence of vertices, replace previous sequence iff
             # the edge weights summed are greater than the current path
             new_path = tuple([*visited[from_vertex], v])
-            visited[v] = self.min_vertex_sequence_weight(visited[v], new_path)
-            # when visted[v] is the new path, the shortest path to it's neighbors may change
-            return visited[v] == new_path
+            if new_path == visited[v] or new_path[0] == new_path[-1]:
+                return False
+            else:
+                visited[v] = self.min_vertex_sequence_weight(visited[v], new_path)
+                # when visted[v] is the new path, the shortest path to it's neighbors may change
+                return visited[v] == new_path
 
     def dfs_non_recursive(self, vertex: Vertex, visited: TypingVisited) -> None:
-        s: deque[TypingEdge] = deque()
+        s: deque[Vertex] = deque()
         self.push_unvisited_neighbors(vertex, s, visited)
         while s:
-            edge = s.pop()
-            self.push_unvisited_neighbors(edge.vertex2, s, visited)
+            neighbor_vertex = s.pop()
+            self.push_unvisited_neighbors(neighbor_vertex, s, visited)
 
     def push_unvisited_neighbors(self, vertex, s, visited) -> None:
         # if the vertex does not have neighbors then there is nothing to iterate
         for neighbor_vertex, edge in self.neighbors(vertex):
-            if self.visit_vertex_neighbors(edge.vertex2, edge.vertex1, visited):
-                s.append(edge)
+            if self.visit_vertex_neighbors(neighbor_vertex, vertex, visited):
+                s.append(neighbor_vertex)
 
     def dfs(self, vertex: Vertex, visited: TypingVisited) -> None:
         # if the vertex does not have neighbors then there is nothing to iterate
         for neighbor_vertex, edge in self.neighbors(vertex):
-            if self.visit_vertex_neighbors(edge.vertex2, edge.vertex1, visited):
+            if self.visit_vertex_neighbors(neighbor_vertex, vertex, visited):
                 self.dfs(neighbor_vertex, visited)
 
     def bfs_traversal(self, starting_vertex: Vertex) -> TypingVisited:
@@ -166,16 +172,16 @@ class Graph:
         return visited
 
     def bfs(self, vertex: Vertex, visited: TypingVisited) -> None:
-        q: deque[TypingEdge] = deque()
+        q: deque[Vertex] = deque()
         self.enqueue_unvisited_neighbors(vertex, q, visited)
         while q:
-            edge = q.pop()
-            self.enqueue_unvisited_neighbors(edge.vertex2, q, visited)
+            neighbor_vertex = q.pop()
+            self.enqueue_unvisited_neighbors(neighbor_vertex, q, visited)
 
     def enqueue_unvisited_neighbors(self, vertex: Vertex, q: deque, visited: TypingVisited) -> None:
         for neighbor_vertex, edge in self.neighbors(vertex):
-            if self.visit_vertex_neighbors(edge.vertex2, edge.vertex1, visited):
-                q.appendleft(edge)
+            if self.visit_vertex_neighbors(neighbor_vertex, vertex, visited):
+                q.appendleft(neighbor_vertex)
 
     def shortest_path(self, vtx_name1: str, vtx_name2: str, search: str) -> Union[TypingPath, NotImplementedError]:
         """ returns vertex sequence from visited[v1] since it is the shortest path to v2 """
